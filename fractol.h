@@ -7,7 +7,16 @@
 #include <math.h>
 #include "minilibx-linux/mlx.h"
 
+#define WIDTH 1000
+#define HEIGHT 800
 
-
+typedef struct s_data
+{
+	void	*mlx;
+	void	*window;
+	double	zoom_level;
+	long double	position[2];
+	int max_iterations;
+} t_data;
 
 #endif
