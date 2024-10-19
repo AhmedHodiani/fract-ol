@@ -20,7 +20,7 @@ typedef struct s_data
 	void	*mlx;
 	void	*window;
 	double	zoom_level;
-	int		position[2];
+	long double	position[2];
 } t_data;
 
 typedef struct s_pixel
@@ -28,34 +28,62 @@ typedef struct s_pixel
 	int	color;
 } t_pixel;
 
-void	set_coordinates(double *x, double *y, int pixel_postion, int center_position[2], double zoom_level)
+void	set_coordinates(long double *x, long double *y, int pixel_postion, long double center_position[2], double zoom_level)
 {
-	*x = pixel_postion % WIDTH - WIDTH / 2 + center_position[0];
-	*y = pixel_postion / WIDTH - HEIGHT / 2 + center_position[1];
+	*x = (pixel_postion % WIDTH) - (WIDTH / 2);
+	*y = (pixel_postion / WIDTH) - (HEIGHT / 2);
 	*y *= -1;
 
 	*x /= zoom_level;
 	*y /= zoom_level;
+
+	*x += center_position[0];
+	*y += center_position[1];
 }
 
-void	reset_coordinates(double *x, double *y, int center_position[2], double zoom_level)
+void	reset_coordinates(long double *x, long double *y, long double center_position[2], double zoom_level)
 {
+	*x -= center_position[0];
+	*y -= center_position[1];
+
 	*x *= zoom_level;
 	*y *= zoom_level;
 
 	*y *= -1;
-	*x += WIDTH / 2 - center_position[0];
-	*y += HEIGHT / 2 - center_position[1];
+	*x += WIDTH / 2;
+	*y += HEIGHT / 2;
 }
 
-void calc_pixel(t_data *data, double x, double y, t_pixel *pixel)
-{
-    // Example condition for coloring based on position (x == 2 or x == -2)
-    if (x == 2 || x == -2)
-    {
-        pixel->color = 0x00FF00; // Green for specific condition
-        return;
-    }
+void calc_pixel(t_data *data, long double x, long double y, t_pixel *pixel) {
+	// red cross in the position center
+	// if (x == data->position[0] && y == data->position[1])
+	// {
+	// 	pixel->color = 0xFF0000;
+	// 	return;
+	// }
+	// // Black
+	// //
+    // if (x == 2 || x == -2)
+    // {
+    //     pixel->color = 0x00FF00; // Green for specific condition
+    //     return;
+    // }
+	if (x == 0)
+	{
+		pixel->color = 0x0000FF; // Black
+	}
+	if (y == 0)
+	{
+		pixel->color = 0x0000FF; // Black
+	}
+	// printf("position : %f, %f\n", data->position[0], data->position[1]);
+	// printf("position2 : %f, %f\n", x, y);
+
+	if (x == data->position[0] || y == data->position[1])
+	{
+		pixel->color = 0x00FFFF; // Green
+		return;
+	}
 
     int iteration = 0;
     double zReal = 0.0;
@@ -78,19 +106,17 @@ void calc_pixel(t_data *data, double x, double y, t_pixel *pixel)
         if (zReal * zReal + zImag * zImag > 4)
         {
             // Use a multi-color gradient based on the number of iterations
-            int red   = (iteration * 15) % 256;  // Cycle red channel from 0 to 255
-            int green = (iteration * 5) % 256; // Cycle green channel from 0 to 255
-            int blue  = (iteration * 10) % 256; // Cycle blue channel from 0 to 255
+            int red   = (iteration * 10) % 256;  // Cycle red channel from 0 to 255
+            int green = (iteration * 15) % 256; // Cycle green channel from 0 to 255
+            int blue  = (iteration * 15) % 256; // Cycle blue channel from 0 to 255
 
             pixel->color = (red << 16) | (green << 8) | blue;  // Combine RGB into a single color value
             return;
         }
     }
 
-    // If max iterations are reached, color as part of the Mandelbrot set
-    pixel->color = 0x000000;  // Black for points inside the set
+    pixel->color = 0x000000;
 }
-
 
 void	paint_canvas(t_data *data)
 {
@@ -99,10 +125,10 @@ void	paint_canvas(t_data *data)
 	int i = 0;
 	while (i < WIDTH * HEIGHT)
 	{
-		double x = 0.0;
-		double y = 0.0;
+		long double x = 0.0;
+		long double y = 0.0;
 		set_coordinates(&x, &y, i, data->position, data->zoom_level);
-		// printf("%d => x = %f, y = %f\n", i, x, y);
+		// printf("%d => x = %Lf, y = %Lf\n", i, x, y);
 
 		calc_pixel(data, x, y, &grid[i % WIDTH][i / WIDTH]);
 
@@ -115,18 +141,20 @@ void	paint_canvas(t_data *data)
 
 int	key_hook(int keycode, t_data *data)
 {
-	int moving_interval = 100;
+	double moving_interval = 350 / data->zoom_level;
 
 	if (keycode == 119 || keycode == 65362)
-		data->position[1] -= moving_interval;
-	if (keycode == 115 || keycode == 65364)
 		data->position[1] += moving_interval;
+	if (keycode == 115 || keycode == 65364)
+		data->position[1] -= moving_interval;
 	if (keycode == 97 || keycode == 65361)
 		data->position[0] -= moving_interval;
 	if (keycode == 100 || keycode == 65363)
 		data->position[0] += moving_interval;
 
 	// printf("key pressed: %d\n", keycode);
+	// printf("position : %f, %f\n", data->position[0], data->position[1]);
+
 	mlx_clear_window(data->mlx, data->window);
 	paint_canvas(data);
 	return (0);
@@ -134,26 +162,15 @@ int	key_hook(int keycode, t_data *data)
 
 int	mouse_hook(int button, int x, int y, t_data *data)
 {
-	// if (data->zoom_level == 0.5 && button == 4)
-	// 	return 0;
-
-	if (data->zoom_level == 100 && button == 5)
-		return 0;
-
 	if (button == 4)
 	{
-		// data->position[0] = x - WIDTH / 2;
-		// data->position[1] = y - HEIGHT / 2;
-		data->zoom_level += 100;
+		data->zoom_level *= 2;
+		data->position[0] += (x - WIDTH / 2) / data->zoom_level;
+		data->position[1] += -(y - HEIGHT / 2) / data->zoom_level;
 	}
 	if (button == 5)
-	{
-		// data->position[0] -= x - WIDTH / 2;
-		// data->position[1] -= y - HEIGHT / 2;
-		data->zoom_level -= 100;
-	}
+		data->zoom_level *= 0.5;
 
-	// printf("Mouse button pressed: %d at (%d, %d), %f\n", button, x, y, data->zoom_level);
 	mlx_clear_window(data->mlx, data->window);
 	paint_canvas(data);
 	return (0);
@@ -172,7 +189,6 @@ int	main(void)
 
 	paint_canvas(&data);
 
-
 	mlx_mouse_hook(data.window, mouse_hook, &data);
 	mlx_key_hook(data.window, key_hook, &data);
 	mlx_loop(data.mlx);
@@ -181,3 +197,16 @@ int	main(void)
 }
 
 // cc main.c -lm -Lminilibx-linux -lmlx_Linux -lX11 -lXext && ./a.out
+
+
+/*
+Whats left to do:
+	- Fix the zooming (center thing)
+	- Fix the exit program
+	- Attempt to fix the image glitching
+	- Fix the colors
+	- Do the other fractolar (argc, argv)
+*/
+
+
+// keeps going to the center when I zoom
