@@ -13,7 +13,7 @@ void	set_coordinates(long double *x, long double *y, int pixel_postion, long dou
 	*y += center_position[1];
 }
 
-void calc_pixel(t_data *data, long double x, long double y, int *pixel, int pixel_bits)
+void calc_pixel_mandelbrot(t_data *data, long double x, long double y, int *pixel, int pixel_bits)
 {
 	int iteration = 0;
 	long double zReal = 0.0;
@@ -31,10 +31,9 @@ void calc_pixel(t_data *data, long double x, long double y, int *pixel, int pixe
 		if (zReal * zReal + zImag * zImag > 4)
 		{
 			double smooth = iteration + 1 - log(log(sqrt(zReal * zReal + zImag * zImag))) / log(2);
-			int color = (int)(255 * smooth / data->max_iterations);
-			int red   = color % 256;
-			int green = 60;
-			int blue  = 90;
+			int red   = (int)(smooth * 15) % 256;
+			int green = (int)(smooth * 10) % 256;
+			int blue  = (int)(smooth * 15) % 256;
 			*pixel = (red << 16) | (green << 8) | blue;
 
 			if (pixel_bits != 32)
@@ -47,27 +46,38 @@ void calc_pixel(t_data *data, long double x, long double y, int *pixel, int pixe
 		*pixel = mlx_get_color_value(data->mlx, *pixel);
 }
 
-void	paint_canvas_mandelbrot(t_data *data)
+void calc_pixel_julia(t_data *data, long double zReal, long double zImag, int *pixel, int pixel_bits)
 {
-	int pixel_bits;
-	int line_bytes;
-	int endian;
-	char *buffer = mlx_get_data_addr(data->image, &pixel_bits, &line_bytes, &endian);
+	int iteration = 0;
+	long double tempReal;
 
-	int i = 0;
-	while (i < WIDTH * HEIGHT)
+	while (iteration < data->max_iterations)
 	{
-		long double x = 0.0;
-		long double y = 0.0;
-		set_coordinates(&x, &y, i, data->position, data->zoom_level);
-		calc_pixel(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
+		tempReal = zReal;
+		zReal = tempReal * tempReal - zImag * zImag + data->julia[0];
+		zImag = 2.0 * tempReal * zImag + data->julia[1];
 
-		i++;
+		iteration++;
+
+		if (zReal * zReal + zImag * zImag > 4)
+		{
+			double smooth = iteration + 1 - log(log(sqrt(zReal * zReal + zImag * zImag))) / log(2);
+			int red   = (int)(smooth * 15) % 256;
+			int green = (int)(smooth * 10) % 256;
+			int blue  = (int)(smooth * 15) % 256;
+			*pixel = (red << 16) | (green << 8) | blue;
+
+			if (pixel_bits != 32)
+				*pixel = mlx_get_color_value(data->mlx, *pixel);
+			return;
+		}
 	}
-	mlx_put_image_to_window(data->mlx, data->window, data->image, 0, 0);
+	*pixel = 0x000000;
+	if (pixel_bits != 32)
+		*pixel = mlx_get_color_value(data->mlx, *pixel);
 }
 
-void paint_canvas_julia(t_data *data)
+void	paint_canvas(t_data *data)
 {
 	int pixel_bits;
 	int line_bytes;
@@ -80,8 +90,11 @@ void paint_canvas_julia(t_data *data)
 		long double x = 0.0;
 		long double y = 0.0;
 		set_coordinates(&x, &y, i, data->position, data->zoom_level);
-		calc_pixel(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
 
+		if (data->type == 0)
+			calc_pixel_mandelbrot(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
+		else if (data->type == 1)
+			calc_pixel_julia(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
 		i++;
 	}
 	mlx_put_image_to_window(data->mlx, data->window, data->image, 0, 0);
@@ -91,6 +104,8 @@ int	key_hook(int keycode, t_data *data)
 {
 	double moving_interval = 300 / data->zoom_level;
 
+	if (keycode == XK_Escape)
+		mlx_loop_end(data->mlx);
 	if (keycode == 119 || keycode == 65362)
 		data->position[1] += moving_interval;
 	if (keycode == 115 || keycode == 65364)
@@ -102,14 +117,9 @@ int	key_hook(int keycode, t_data *data)
 	if (keycode == 61)
 		data->max_iterations *= 1.5;
 	if (keycode == 45 && data->max_iterations > 5)
-		data->max_iterations *= 0.5;
+		data->max_iterations *= 0.75;
 
-	printf("Position: %Lf, %Lf\n", data->position[0], data->position[1]);
-
-	if (data->type == 0)
-		paint_canvas_mandelbrot(data);
-	else if (data->type == 1)
-		paint_canvas_julia(data);
+	paint_canvas(data);
 	return (0);
 }
 
@@ -131,99 +141,67 @@ int	mouse_hook(int button, int x, int y, t_data *data)
 		data->position[1] += ly;
 		data->zoom_level *= 3;
 	}
-	if (button == 5 && data->zoom_level > 100)
+	if (button == 5 && data->zoom_level > 150)
 		data->zoom_level *= 0.5;
 
-	if (data->type == 0)
-		paint_canvas_mandelbrot(data);
-	else if (data->type == 1)
-		paint_canvas_julia(data);
+	paint_canvas(data);
 	return (0);
 }
 
-int ft_strlen(char *str)
-{
-	int i = 0;
-	while (str[i])
-		i++;
-	return (i);
-}
 
-void	ft_putendl(char *str)
+void ft_destory(t_data *data)
 {
-	write(1, str, ft_strlen(str));
-	write(1, "\n", 1);
+	mlx_destroy_image(data->mlx, data->image);
+	mlx_destroy_window(data->mlx, data->window);
+	mlx_destroy_display(data->mlx);
+	free(data->mlx);
 }
-
-// ft_strcmp
-int ft_strcmp(char *s1, char *s2)
-{
-	while (*s1 == *s2)
-	{
-		if (*s1 == '\0')
-			return (0);
-		s1++;
-		s2++;
-	}
-	return (*s1 - *s2);
-}
-
 
 int		main(int argc, char **argv)
 {
 	t_data data;
 	data.zoom_level = 200;
-	data.max_iterations = 19;
+	data.max_iterations = 30;
 	data.position[0] = 0;
 	data.position[1] = 0;
 
-	if (argc < 2) {
-		ft_putendl("parameters missing");
+	if (argc < 2)
+	{
+		ft_putendl_fd("parameters missing", 1);
 		return 1;
 	}
-
 	if (!ft_strcmp(argv[1], "mandelbrot"))
 	{
-		data.mlx = mlx_init();
-		data.window = mlx_new_window(data.mlx, WIDTH, HEIGHT, "ataher");
-		data.image = mlx_new_image(data.mlx, WIDTH, HEIGHT);
 		data.type = 0;
-
-		paint_canvas_mandelbrot(&data);
-		mlx_mouse_hook(data.window, mouse_hook, &data);
-		mlx_key_hook(data.window, key_hook, &data);
-		mlx_loop(data.mlx);
 	}
 	else if (!ft_strcmp(argv[1], "julia"))
 	{
-		data.mlx = mlx_init();
-		data.window = mlx_new_window(data.mlx, WIDTH, HEIGHT, "ataher");
-		data.image = mlx_new_image(data.mlx, WIDTH, HEIGHT);
-		data.type = 1;
+		if (argc != 4) {
+			ft_putendl_fd("wrong parameters", 1);
+			return 1;
+		}
+		data.julia[0] = ft_atof(argv[2]);
+		data.julia[1] = ft_atof(argv[3]);
 
-		paint_canvas_julia(&data);
-		mlx_mouse_hook(data.window, mouse_hook, &data);
-		mlx_key_hook(data.window, key_hook, &data);
-		mlx_loop(data.mlx);
+		data.type = 1;
+		data.max_iterations = 30;
 	}
 	else {
-		ft_putendl("unknown fractol");
+		ft_putendl_fd("unknown fractol", 1);
 		return 1;
 	}
+
+	data.mlx = mlx_init();
+	data.window = mlx_new_window(data.mlx, WIDTH, HEIGHT, "ataher");
+	data.image = mlx_new_image(data.mlx, WIDTH, HEIGHT);
+
+	paint_canvas(&data);
+	mlx_mouse_hook(data.window, mouse_hook, &data);
+	mlx_key_hook(data.window, key_hook, &data);
+	mlx_hook(data.window, 17, 0, &mlx_loop_end, data.mlx);
+	mlx_loop(data.mlx);
+	ft_destory(&data);
 	return (0);
 }
 
 // cc main.c -lm -Lminilibx-linux -lmlx_Linux -lX11 -lXext && ./a.out
-
-
-/*
-Whats left to do:
-	- Fix the exit program
-	- Fix the colors
-	- Do the other fractolar (argc, argv)
-*/
-
-
-// keeps going to the center when I zoom
-
-
