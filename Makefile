@@ -1,7 +1,7 @@
 NAME		= fractol
 INCLUDE		= include
 CC			= cc
-CFLAGS		=  -I$(INCLUDE)
+CFLAGS		= -Wall -Wextra -Werror -I$(INCLUDE)
 
 SRCS		= main.c hooks.c fractol.c complex.c utils.c
 

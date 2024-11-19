@@ -6,7 +6,7 @@
 /*   By: ataher <ataher@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:43:40 by ataher            #+#    #+#             */
-/*   Updated: 2024/11/19 12:23:15 by ataher           ###   ########.fr       */
+/*   Updated: 2024/11/19 14:08:16 by ataher           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,12 +14,14 @@
 
 void	paint_canvas(t_data *data)
 {
-	int pixel_bits;
-	int line_bytes;
-	int endian;
-	char *buffer = mlx_get_data_addr(data->image, &pixel_bits, &line_bytes, &endian);
+	int	pixel_bits;
+	int	line_bytes;
+	int	endian;
+	int	i;
+	char	*buffer;
 
-	int i = 0;
+	buffer = mlx_get_data_addr(data->image, &pixel_bits, &line_bytes, &endian);
+	i = 0;
 	while (i < WIDTH * HEIGHT)
 	{
 		long double x = 0.0;
@@ -37,44 +39,64 @@ void	paint_canvas(t_data *data)
 	mlx_put_image_to_window(data->mlx, data->window, data->image, 0, 0);
 }
 
-int		main(int argc, char **argv)
+int	init_fractol_type(t_data *data, int argc, char **argv)
+{
+	if (argc < 2 || argc > 4)
+	{
+		send_parameters_missing();
+		return (0);
+	}
+	if (!ft_strcmp(argv[1], "mandelbrot"))
+		data->type = 0;
+	else if (!ft_strcmp(argv[1], "julia"))
+		data->type = 1;
+	else if (!ft_strcmp(argv[1], "newton"))
+		data->type = 2;
+	else
+	{
+		send_fractol_type_is_not_valid(argv[1]);
+		return (0);
+	}
+	return (1);
+}
+
+int	init_data(t_data *data, int argc, char **argv)
+{
+	if (data->type == 1)
+	{
+		if (argc != 4)
+		{
+			send_parameters_missing();
+			return (0);
+		}
+		if (!is_valid_double(argv[2]) || !is_valid_double(argv[3]))
+		{
+			send_numbers_are_not_valid(argv[2], argv[3]);
+			return (0);
+		}
+		data->julia[0] = ft_atof(argv[2]);
+		data->julia[1] = ft_atof(argv[3]);
+		data->max_iterations = 30;
+	}
+	else if ((data->type == 0 || data->type == 2) && argc != 2)
+	{
+		send_parameters_missing();
+		return (0);
+	}
+	return (1);
+}
+
+int	main(int argc, char **argv)
 {
 	t_data data;
 	data.zoom_level = 200;
 	data.max_iterations = 30;
 	data.position[0] = 0;
 	data.position[1] = 0;
-
-	if (argc < 2)
-	{
-		ft_printf("parameters missing\n");
-		return 1;
-	}
-	if (!ft_strcmp(argv[1], "mandelbrot"))
-	{
-		data.type = 0;
-	}
-	else if (!ft_strcmp(argv[1], "julia"))
-	{
-		if (argc != 4) {
-			ft_printf("wrong parameters\n");
-			return 1;
-		}
-		data.julia[0] = ft_atof(argv[2]);
-		data.julia[1] = ft_atof(argv[3]);
-
-		data.type = 1;
-		data.max_iterations = 30;
-	}
-	else if (!ft_strcmp(argv[1], "newton"))
-	{
-		data.type = 2;
-	}
-	else {
-		ft_printf("unknown fractol\n");
-		return 1;
-	}
-
+	if (!init_fractol_type(&data, argc, argv))
+		return (1);
+	if (!init_data(&data, argc, argv))
+		return (1);
 	data.mlx = mlx_init();
 	data.window = mlx_new_window(data.mlx, WIDTH, HEIGHT, "ataher");
 	data.image = mlx_new_image(data.mlx, WIDTH, HEIGHT);

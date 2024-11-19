@@ -6,7 +6,7 @@
 /*   By: ataher <ataher@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/09/10 10:35:43 by ataher            #+#    #+#             */
-/*   Updated: 2024/09/14 08:39:34 by ataher           ###   ########.fr       */
+/*   Updated: 2024/11/19 14:11:22 by ataher           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include <stdio.h>
 
 int		ft_printf(const char *format, ...);
+void	ft_print_strings(char **strings);
 int		ft_putaddress_fd(void *address, int fd);
 int		ft_putnbr_fd(int n, int fd);
 int		ft_putstr_fd(char *s, int fd);
