@@ -6,7 +6,7 @@
 /*   By: ataher <ataher@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:40:31 by ataher            #+#    #+#             */
-/*   Updated: 2024/11/19 09:42:11 by ataher           ###   ########.fr       */
+/*   Updated: 2024/11/19 12:22:29 by ataher           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,29 +27,25 @@ void	set_coordinates(long double *x, long double *y, int pixel_postion, long dou
 
 void calc_pixel_mandelbrot(t_data *data, long double x, long double y, int *pixel, int pixel_bits)
 {
-	int iteration = 0;
-	long double zReal = 0.0;
-	long double zImag = 0.0;
-	long double tempReal;
+	int iteration;
+	t_complex z;
+	t_complex c;
+	t_complex center;
 
+	z.real = 0;
+	z.imag = 0;
+	center.real = 0;
+	center.imag = 0;
+	c.real = x;
+	c.imag = y;
+	iteration = 0;
 	while (iteration < data->max_iterations)
 	{
-		tempReal = zReal;
-		zReal = tempReal * tempReal - zImag * zImag + x;
-		zImag = 2.0 * tempReal * zImag + y;
-
+		z = complex_number_add(complex_number_squared(z), c);
 		iteration++;
-
-		if (zReal * zReal + zImag * zImag > 4)
+		if (complex_get_distance(z, center) > 2)
 		{
-			double smooth = iteration + 1 - log(log(sqrt(zReal * zReal + zImag * zImag))) / log(2);
-			int red   = (int)(smooth * 15) % 256;
-			int green = (int)(smooth * 10) % 256;
-			int blue  = (int)(smooth * 15) % 256;
-			*pixel = (red << 16) | (green << 8) | blue;
-
-			if (pixel_bits != 32)
-				*pixel = mlx_get_color_value(data->mlx, *pixel);
+			*pixel = calc_color(data, z, iteration, pixel_bits);
 			return;
 		}
 	}
@@ -60,27 +56,25 @@ void calc_pixel_mandelbrot(t_data *data, long double x, long double y, int *pixe
 
 void calc_pixel_julia(t_data *data, long double zReal, long double zImag, int *pixel, int pixel_bits)
 {
-	int iteration = 0;
-	long double tempReal;
+	int iteration;
+	t_complex z;
+	t_complex c;
+	t_complex center;
 
+	z.real = zReal;
+	z.imag = zImag;
+	center.real = 0;
+	center.imag = 0;
+	c.real = data->julia[0];
+	c.imag = data->julia[1];
+	iteration = 0;
 	while (iteration < data->max_iterations)
 	{
-		tempReal = zReal;
-		zReal = tempReal * tempReal - zImag * zImag + data->julia[0];
-		zImag = 2.0 * tempReal * zImag + data->julia[1];
-
+		z = complex_number_add(complex_number_squared(z), c);
 		iteration++;
-
-		if (zReal * zReal + zImag * zImag > 4)
+		if (complex_get_distance(z, center) > 2)
 		{
-			double smooth = iteration + 1 - log(log(sqrt(zReal * zReal + zImag * zImag))) / log(2);
-			int red   = (int)(smooth * 15) % 256;
-			int green = (int)(smooth * 10) % 256;
-			int blue  = (int)(smooth * 15) % 256;
-			*pixel = (red << 16) | (green << 8) | blue;
-
-			if (pixel_bits != 32)
-				*pixel = mlx_get_color_value(data->mlx, *pixel);
+			*pixel = calc_color(data, z, iteration, pixel_bits);
 			return;
 		}
 	}
@@ -89,25 +83,51 @@ void calc_pixel_julia(t_data *data, long double zReal, long double zImag, int *p
 		*pixel = mlx_get_color_value(data->mlx, *pixel);
 }
 
-void	paint_canvas(t_data *data)
+void	calc_pixel_newton(t_data *data, long double x, long double y, int *pixel, int pixel_bits)
 {
-	int pixel_bits;
-	int line_bytes;
-	int endian;
-	char *buffer = mlx_get_data_addr(data->image, &pixel_bits, &line_bytes, &endian);
+	// newton's fractal
+	// f(z) = z^3 - 1
+	// f'(z) = 3z^2
 
-	int i = 0;
-	while (i < WIDTH * HEIGHT)
+	int iteration = 0;
+	t_complex z;
+	z.real = x;
+	z.imag = y;
+
+	t_complex roots[3];
+	complex_get_roots_of_unity(roots);
+
+	while (iteration < data->max_iterations)
 	{
-		long double x = 0.0;
-		long double y = 0.0;
-		set_coordinates(&x, &y, i, data->position, data->zoom_level);
+		t_complex f = complex_number_cubed(z);
+		f.real -= 1.0;
 
-		if (data->type == 0)
-			calc_pixel_mandelbrot(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
-		else if (data->type == 1)
-			calc_pixel_julia(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
-		i++;
+		t_complex df = complex_number_squared(z);
+		df.real = df.real * 3;
+		df.imag = df.imag * 3;
+
+		z = complex_number_subtract(z, complex_number_divide(f, df));
+
+		int i = 1;
+		while (i < 4)
+		{
+			long double distance = complex_get_distance(z, roots[i - 1]);
+			if (distance < 0.1)
+			{
+				int red   = (int)(i * 70) % 256;
+				int green = (int)(i * 40) % 256;
+				int blue  = (int)(i * 50) % 256;
+				*pixel = (red << 16) | (green << 8) | blue;
+
+				if (pixel_bits != 32)
+					*pixel = mlx_get_color_value(data->mlx, *pixel);
+				return;
+			}
+			i++;
+		}
+		iteration++;
 	}
-	mlx_put_image_to_window(data->mlx, data->window, data->image, 0, 0);
+	*pixel = 0x000000;
+	if (pixel_bits != 32)
+		*pixel = mlx_get_color_value(data->mlx, *pixel);
 }

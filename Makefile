@@ -1,9 +1,9 @@
 NAME		= fractol
 INCLUDE		= include
 CC			= cc
-CFLAGS		= -Wall -Wextra -Werror -I$(INCLUDE)
+CFLAGS		=  -I$(INCLUDE)
 
-SRCS		= main.c hooks.c fractol.c
+SRCS		= main.c hooks.c fractol.c complex.c utils.c
 
 LIBFT			= ft
 LIBFT_ARCHIVE	= libft.a
