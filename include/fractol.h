@@ -6,8 +6,8 @@
 #include <unistd.h>
 #include <math.h>
 #include <X11/keysym.h>
-#include "minilibx-linux/mlx.h"
-#include "libft/libft.h"
+#include "../minilibx-linux/mlx.h"
+#include "../libft/libft.h"
 
 #define WIDTH 1000
 #define HEIGHT 800

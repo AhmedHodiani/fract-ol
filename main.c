@@ -1,4 +1,4 @@
-#include "fractol.h"
+#include "include/fractol.h"
 
 void	set_coordinates(long double *x, long double *y, int pixel_postion, long double center_position[2], double zoom_level)
 {
