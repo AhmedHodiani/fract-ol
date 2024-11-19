@@ -14,9 +14,11 @@ typedef struct s_data
 {
 	void	*mlx;
 	void	*window;
+	void	*image;
 	double	zoom_level;
 	long double	position[2];
 	int max_iterations;
+	char *name;
 } t_data;
 
 #endif

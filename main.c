@@ -26,7 +26,7 @@ void	reset_coordinates(long double *x, long double *y, long double center_positi
 	*y += HEIGHT / 2;
 }
 
-void calc_pixel(t_data *data, long double x, long double y, int *pixel)
+void calc_pixel(t_data *data, long double x, long double y, int *pixel, int pixel_bits)
 {
 	int iteration = 0;
 	long double zReal = 0.0;
@@ -43,19 +43,29 @@ void calc_pixel(t_data *data, long double x, long double y, int *pixel)
 
 		if (zReal * zReal + zImag * zImag > 4)
 		{
-			int red   = (iteration * 10) % 256;
-			int green = (iteration * 15) % 256;
-			int blue  = (iteration * 15) % 256;
+			double smooth = iteration + 1 - log(log(sqrt(zReal * zReal + zImag * zImag))) / log(2);
+			int color = (int)(255 * smooth / data->max_iterations);
+			int red   = color % 256;
+			int green = 60;
+			int blue  = 90;
 			*pixel = (red << 16) | (green << 8) | blue;
+
+			if (pixel_bits != 32)
+				*pixel = mlx_get_color_value(data->mlx, *pixel);
 			return;
 		}
 	}
 	*pixel = 0x000000;
+	if (pixel_bits != 32)
+		*pixel = mlx_get_color_value(data->mlx, *pixel);
 }
 
-void	paint_canvas(t_data *data)
+void	paint_canvas_mandelbrot(t_data *data)
 {
-	int grid[WIDTH][HEIGHT] = {0};
+	int pixel_bits;
+	int line_bytes;
+	int endian;
+	char *buffer = mlx_get_data_addr(data->image, &pixel_bits, &line_bytes, &endian);
 
 	int i = 0;
 	while (i < WIDTH * HEIGHT)
@@ -63,11 +73,12 @@ void	paint_canvas(t_data *data)
 		long double x = 0.0;
 		long double y = 0.0;
 		set_coordinates(&x, &y, i, data->position, data->zoom_level);
-		calc_pixel(data, x, y, &grid[i % WIDTH][i / WIDTH]);
+		calc_pixel(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
 		reset_coordinates(&x, &y, data->position, data->zoom_level);
-		mlx_pixel_put(data->mlx, data->window, x, y, grid[(int)x][(int)y]);
+
 		i++;
 	}
+	mlx_put_image_to_window(data->mlx, data->window, data->image, 0, 0);
 }
 
 int	key_hook(int keycode, t_data *data)
@@ -89,7 +100,9 @@ int	key_hook(int keycode, t_data *data)
 
 	// printf("key pressed: %d\n", keycode);
 	mlx_clear_window(data->mlx, data->window);
-	paint_canvas(data);
+
+	// if (data->name == "mandelbrot")
+		paint_canvas_mandelbrot(data);
 	return (0);
 }
 
@@ -101,29 +114,78 @@ int	mouse_hook(int button, int x, int y, t_data *data)
 		data->position[0] += (x - WIDTH / 2) / data->zoom_level;
 		data->position[1] += -(y - HEIGHT / 2) / data->zoom_level;
 	}
-	if (button == 5)
+	if (button == 5 && data->zoom_level > 100)
 		data->zoom_level *= 0.5;
 
-	mlx_clear_window(data->mlx, data->window);
-	paint_canvas(data);
+	// mlx_clear_window(data->mlx, data->window);
+	// if (data->name == "mandelbrot")
+		paint_canvas_mandelbrot(data);
 	return (0);
 }
 
-int	main(void)
+int ft_strlen(char *str)
+{
+	int i = 0;
+	while (str[i])
+		i++;
+	return (i);
+}
+
+void	ft_putendl(char *str)
+{
+	write(1, str, ft_strlen(str));
+	write(1, "\n", 1);
+}
+
+// ft_strcmp
+int ft_strcmp(char *s1, char *s2)
+{
+	while (*s1 == *s2)
+	{
+		if (*s1 == '\0')
+			return (0);
+		s1++;
+		s2++;
+	}
+	return (*s1 - *s2);
+}
+
+
+int		main(int argc, char **argv)
 {
 	t_data data;
 
-	data.mlx = mlx_init();
-	data.window = mlx_new_window(data.mlx, WIDTH, HEIGHT, "ataher");
-	data.zoom_level = 200;
-	data.max_iterations = 50;
-	data.position[0] = 0;
-	data.position[1] = 0;
+	if (argc < 2) {
+		ft_putendl("parameters missing");
+		return 1;
+	}
 
-	paint_canvas(&data);
-	mlx_mouse_hook(data.window, mouse_hook, &data);
-	mlx_key_hook(data.window, key_hook, &data);
-	mlx_loop(data.mlx);
+
+	if (!ft_strcmp(argv[1], "mandelbrot"))
+	{
+		data.mlx = mlx_init();
+		data.window = mlx_new_window(data.mlx, WIDTH, HEIGHT, "ataher");
+		data.image = mlx_new_image(data.mlx, WIDTH, HEIGHT);
+
+		data.zoom_level = 200;
+		data.max_iterations = 19;
+		data.position[0] = 0;
+		data.position[1] = 0;
+		data.name = argv[1];
+
+		paint_canvas_mandelbrot(&data);
+		mlx_mouse_hook(data.window, mouse_hook, &data);
+		mlx_key_hook(data.window, key_hook, &data);
+		mlx_loop(data.mlx);
+	}
+	else if (!ft_strcmp(argv[1], "julia"))
+	{
+
+	}
+	else {
+		ft_putendl("unknown fractol");
+		return 1;
+	}
 	return (0);
 }
 
@@ -139,3 +201,5 @@ Whats left to do:
 
 
 // keeps going to the center when I zoom
+
+
