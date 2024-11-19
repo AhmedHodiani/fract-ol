@@ -6,7 +6,7 @@
 /*   By: ataher <ataher@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:33:14 by ataher            #+#    #+#             */
-/*   Updated: 2024/11/19 09:41:02 by ataher           ###   ########.fr       */
+/*   Updated: 2024/11/19 09:45:55 by ataher           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #include <X11/keysym.h>
 #include "mlx.h"
 #include "libft.h"
+#include "ft_printf.h"
 
 #define WIDTH 1000
 #define HEIGHT 800

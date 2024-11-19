@@ -6,7 +6,7 @@
 /*   By: ataher <ataher@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:43:40 by ataher            #+#    #+#             */
-/*   Updated: 2024/11/19 09:43:45 by ataher           ###   ########.fr       */
+/*   Updated: 2024/11/19 09:46:19 by ataher           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ int		main(int argc, char **argv)
 
 	if (argc < 2)
 	{
-		ft_putendl_fd("parameters missing", 1);
+		ft_printf("parameters missing\n");
 		return 1;
 	}
 	if (!ft_strcmp(argv[1], "mandelbrot"))
@@ -32,7 +32,7 @@ int		main(int argc, char **argv)
 	else if (!ft_strcmp(argv[1], "julia"))
 	{
 		if (argc != 4) {
-			ft_putendl_fd("wrong parameters", 1);
+			ft_printf("wrong parameters\n");
 			return 1;
 		}
 		data.julia[0] = ft_atof(argv[2]);
@@ -42,7 +42,7 @@ int		main(int argc, char **argv)
 		data.max_iterations = 30;
 	}
 	else {
-		ft_putendl_fd("unknown fractol", 1);
+		ft_printf("unknown fractol\n");
 		return 1;
 	}
 
