@@ -3,7 +3,13 @@ INCLUDE		= include
 CC			= cc
 CFLAGS		= -Wall -Wextra -Werror -I$(INCLUDE)
 
-SRCS		= main.c hooks.c fractol.c complex.c utils.c
+SRCS		=	src/main.c \
+				src/hooks.c \
+				src/fractol.c \
+				src/fractol_utils.c \
+				src/complex/basic.c \
+				src/complex/power.c \
+				src/utils.c
 
 LIBFT			= ft
 LIBFT_ARCHIVE	= libft.a

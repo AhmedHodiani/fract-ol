@@ -6,34 +6,34 @@
 /*   By: ataher <ataher@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:43:40 by ataher            #+#    #+#             */
-/*   Updated: 2024/11/19 14:08:16 by ataher           ###   ########.fr       */
+/*   Updated: 2024/11/19 15:11:12 by ataher           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "include/fractol.h"
+#include "../include/fractol.h"
 
 void	paint_canvas(t_data *data)
 {
-	int	pixel_bits;
-	int	line_bytes;
-	int	endian;
-	int	i;
-	char	*buffer;
+	int						line_bytes;
+	int						endian;
+	int						i;
+	char					*buffer;
+	t_calc_pixel_fractol	params;
 
-	buffer = mlx_get_data_addr(data->image, &pixel_bits, &line_bytes, &endian);
+	buffer = mlx_get_data_addr(data->image, &params.pb, &line_bytes, &endian);
 	i = 0;
 	while (i < WIDTH * HEIGHT)
 	{
-		long double x = 0.0;
-		long double y = 0.0;
-		set_coordinates(&x, &y, i, data->position, data->zoom_level);
-
+		params.point.real = 0.0;
+		params.point.imag = 0.0;
+		params.pixel = (int *)(buffer + i * (params.pb / 8));
+		set_coordinates(&params.point, i, data->position, data->zoom_level);
 		if (data->type == 0)
-			calc_pixel_mandelbrot(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
+			calc_pixel_mandelbrot(data, params);
 		else if (data->type == 1)
-			calc_pixel_julia(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
+			calc_pixel_julia(data, params);
 		else if (data->type == 2)
-			calc_pixel_newton(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
+			calc_pixel_newton(data, params);
 		i++;
 	}
 	mlx_put_image_to_window(data->mlx, data->window, data->image, 0, 0);
@@ -88,7 +88,8 @@ int	init_data(t_data *data, int argc, char **argv)
 
 int	main(int argc, char **argv)
 {
-	t_data data;
+	t_data	data;
+
 	data.zoom_level = 200;
 	data.max_iterations = 30;
 	data.position[0] = 0;
@@ -100,7 +101,6 @@ int	main(int argc, char **argv)
 	data.mlx = mlx_init();
 	data.window = mlx_new_window(data.mlx, WIDTH, HEIGHT, "ataher");
 	data.image = mlx_new_image(data.mlx, WIDTH, HEIGHT);
-
 	paint_canvas(&data);
 	mlx_mouse_hook(data.window, mouse_hook, &data);
 	mlx_key_hook(data.window, key_hook, &data);
