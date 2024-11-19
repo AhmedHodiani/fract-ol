@@ -13,19 +13,6 @@ void	set_coordinates(long double *x, long double *y, int pixel_postion, long dou
 	*y += center_position[1];
 }
 
-void	reset_coordinates(long double *x, long double *y, long double center_position[2], double zoom_level)
-{
-	*x -= center_position[0];
-	*y -= center_position[1];
-
-	*x *= zoom_level;
-	*y *= zoom_level;
-
-	*y *= -1;
-	*x += WIDTH / 2;
-	*y += HEIGHT / 2;
-}
-
 void calc_pixel(t_data *data, long double x, long double y, int *pixel, int pixel_bits)
 {
 	int iteration = 0;
@@ -74,7 +61,26 @@ void	paint_canvas_mandelbrot(t_data *data)
 		long double y = 0.0;
 		set_coordinates(&x, &y, i, data->position, data->zoom_level);
 		calc_pixel(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
-		reset_coordinates(&x, &y, data->position, data->zoom_level);
+
+		i++;
+	}
+	mlx_put_image_to_window(data->mlx, data->window, data->image, 0, 0);
+}
+
+void paint_canvas_julia(t_data *data)
+{
+	int pixel_bits;
+	int line_bytes;
+	int endian;
+	char *buffer = mlx_get_data_addr(data->image, &pixel_bits, &line_bytes, &endian);
+
+	int i = 0;
+	while (i < WIDTH * HEIGHT)
+	{
+		long double x = 0.0;
+		long double y = 0.0;
+		set_coordinates(&x, &y, i, data->position, data->zoom_level);
+		calc_pixel(data, x, y, (int *)(buffer + i * (pixel_bits / 8)), pixel_bits);
 
 		i++;
 	}
@@ -98,28 +104,40 @@ int	key_hook(int keycode, t_data *data)
 	if (keycode == 45 && data->max_iterations > 5)
 		data->max_iterations *= 0.5;
 
-	// printf("key pressed: %d\n", keycode);
-	mlx_clear_window(data->mlx, data->window);
+	printf("Position: %Lf, %Lf\n", data->position[0], data->position[1]);
 
-	// if (data->name == "mandelbrot")
+	if (data->type == 0)
 		paint_canvas_mandelbrot(data);
+	else if (data->type == 1)
+		paint_canvas_julia(data);
 	return (0);
 }
 
 int	mouse_hook(int button, int x, int y, t_data *data)
 {
+	long double lx = (long double)x;
+	long double ly = (long double)y;
+
 	if (button == 4)
 	{
+		lx -= (WIDTH / 2);
+		ly -= (HEIGHT / 2);
+		ly *= -1;
+
+		lx /= data->zoom_level;
+		ly /= data->zoom_level;
+
+		data->position[0] += lx;
+		data->position[1] += ly;
 		data->zoom_level *= 3;
-		data->position[0] += (x - WIDTH / 2) / data->zoom_level;
-		data->position[1] += -(y - HEIGHT / 2) / data->zoom_level;
 	}
 	if (button == 5 && data->zoom_level > 100)
 		data->zoom_level *= 0.5;
 
-	// mlx_clear_window(data->mlx, data->window);
-	// if (data->name == "mandelbrot")
+	if (data->type == 0)
 		paint_canvas_mandelbrot(data);
+	else if (data->type == 1)
+		paint_canvas_julia(data);
 	return (0);
 }
 
@@ -154,24 +172,22 @@ int ft_strcmp(char *s1, char *s2)
 int		main(int argc, char **argv)
 {
 	t_data data;
+	data.zoom_level = 200;
+	data.max_iterations = 19;
+	data.position[0] = 0;
+	data.position[1] = 0;
 
 	if (argc < 2) {
 		ft_putendl("parameters missing");
 		return 1;
 	}
 
-
 	if (!ft_strcmp(argv[1], "mandelbrot"))
 	{
 		data.mlx = mlx_init();
 		data.window = mlx_new_window(data.mlx, WIDTH, HEIGHT, "ataher");
 		data.image = mlx_new_image(data.mlx, WIDTH, HEIGHT);
-
-		data.zoom_level = 200;
-		data.max_iterations = 19;
-		data.position[0] = 0;
-		data.position[1] = 0;
-		data.name = argv[1];
+		data.type = 0;
 
 		paint_canvas_mandelbrot(&data);
 		mlx_mouse_hook(data.window, mouse_hook, &data);
@@ -180,7 +196,15 @@ int		main(int argc, char **argv)
 	}
 	else if (!ft_strcmp(argv[1], "julia"))
 	{
+		data.mlx = mlx_init();
+		data.window = mlx_new_window(data.mlx, WIDTH, HEIGHT, "ataher");
+		data.image = mlx_new_image(data.mlx, WIDTH, HEIGHT);
+		data.type = 1;
 
+		paint_canvas_julia(&data);
+		mlx_mouse_hook(data.window, mouse_hook, &data);
+		mlx_key_hook(data.window, key_hook, &data);
+		mlx_loop(data.mlx);
 	}
 	else {
 		ft_putendl("unknown fractol");

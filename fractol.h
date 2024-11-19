@@ -18,7 +18,7 @@ typedef struct s_data
 	double	zoom_level;
 	long double	position[2];
 	int max_iterations;
-	char *name;
+	int type; // 0 = mandelbrot, 1 = julia
 } t_data;
 
 #endif
