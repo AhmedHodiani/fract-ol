@@ -6,7 +6,7 @@
 /*   By: ataher <ataher@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 12:13:09 by ataher            #+#    #+#             */
-/*   Updated: 2024/11/24 09:26:11 by ataher           ###   ########.fr       */
+/*   Updated: 2024/11/24 09:47:04 by ataher           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,29 +33,29 @@ int	calc_color(t_data *data, t_complex z, int iteration, int pixel_bits)
 
 void	send_fractol_type_is_not_valid(char *fractol_type)
 {
-	ft_printf("============================================\n\n"
-			"invalid fractol type: %s\n\n"
-			"usage: ./fractol [ julia | mandelbrot | newton ] [x] [y]"
-			"x and y are only for julia set fractals\n\n"
+	ft_printf("============================================\n\n" \
+			"invalid fractol type: %s\n\n" \
+			"usage: ./fractol [ julia | mandelbrot | newton ] [x] [y]" \
+			"x and y are only for julia set fractals\n\n" \
 			"============================================\n", fractol_type);
 }
 
 void	send_parameters_missing(void)
 {
-	ft_printf("============================================\n\n"
-			"wrong parameters\n\n"
-			"usage: ./fractol [ julia | mandelbrot | newton ] [x] [y]"
-			"x and y are only for julia set fractals\n\n"
+	ft_printf("============================================\n\n" \
+			"wrong parameters\n\n" \
+			"usage: ./fractol [ julia | mandelbrot | newton ] [x] [y]" \
+			"x and y are only for julia set fractals\n\n" \
 			"============================================\n");
 }
 
 void	send_numbers_are_not_valid(char *x, char *y)
 {
-	ft_printf("============================================\n\n"
-			"wrong parameters\n\n"
-			"usage: ./fractol [ julia | mandelbrot | newton ] [x] [y]"
-			"some/all of the following values are not valid for a julia:\n"
-			"%s\n%s\n\n"
+	ft_printf("============================================\n\n" \
+			"wrong parameters\n\n" \
+			"usage: ./fractol [ julia | mandelbrot | newton ] [x] [y]" \
+			"some/all of the following values are not valid for a julia:\n" \
+			"%s\n%s\n\n" \
 			"============================================\n", x, y);
 }
 

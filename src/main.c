@@ -6,7 +6,7 @@
 /*   By: ataher <ataher@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:43:40 by ataher            #+#    #+#             */
-/*   Updated: 2024/11/19 15:11:12 by ataher           ###   ########.fr       */
+/*   Updated: 2024/11/24 09:45:38 by ataher           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,13 +94,18 @@ int	main(int argc, char **argv)
 	data.max_iterations = 30;
 	data.position[0] = 0;
 	data.position[1] = 0;
-	if (!init_fractol_type(&data, argc, argv))
-		return (1);
-	if (!init_data(&data, argc, argv))
+	if (!init_fractol_type(&data, argc, argv) || !init_data(&data, argc, argv))
 		return (1);
 	data.mlx = mlx_init();
+	if (!data.mlx)
+		return (1);
 	data.window = mlx_new_window(data.mlx, WIDTH, HEIGHT, "ataher");
 	data.image = mlx_new_image(data.mlx, WIDTH, HEIGHT);
+	if (!data.window || !data.image)
+	{
+		ft_destory(&data);
+		return (1);
+	}
 	paint_canvas(&data);
 	mlx_mouse_hook(data.window, mouse_hook, &data);
 	mlx_key_hook(data.window, key_hook, &data);
