@@ -6,7 +6,7 @@
 /*   By: ataher <ataher@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:34:57 by ataher            #+#    #+#             */
-/*   Updated: 2024/11/19 15:25:58 by ataher           ###   ########.fr       */
+/*   Updated: 2024/11/24 09:50:10 by ataher           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,9 +52,13 @@ int	mouse_hook(int button, int x, int y, t_data *data)
 		data->position[0] += lx;
 		data->position[1] += ly;
 		data->zoom_level *= 3;
+		data->max_iterations += 2;
 	}
 	if (button == 5 && data->zoom_level > 150)
+	{
 		data->zoom_level *= 0.5;
+		data->max_iterations -= 2;
+	}
 	paint_canvas(data);
 	return (0);
 }
