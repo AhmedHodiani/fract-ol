@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   fractol.h                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ataher <ataher@student.42.fr>              +#+  +:+       +#+        */
+/*   By: ataher <ataher@student.42amman.com>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/19 09:33:14 by ataher            #+#    #+#             */
-/*   Updated: 2024/11/19 17:57:30 by ataher           ###   ########.fr       */
+/*   Updated: 2025/01/04 03:15:28 by ataher           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,12 +17,12 @@
 # include <unistd.h>
 # include <math.h>
 # include <X11/keysym.h>
-# include "../minilibx-linux/mlx.h"
+# include <mlx.h>
 # include "libft.h"
-# include "ft_printf.h"
+# include "libftprintf.h"
 
-# define WIDTH 1000
-# define HEIGHT 800
+# define WIDTH 500
+# define HEIGHT 500
 
 // type: 0 = mandelbrot, 1 = julia, // 2 = newton
 typedef struct s_data
