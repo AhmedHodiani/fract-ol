@@ -17,7 +17,7 @@
 # include <unistd.h>
 # include <math.h>
 # include <X11/keysym.h>
-# include <mlx.h>
+# include "mlx.h"
 # include "libft.h"
 # include "libftprintf.h"
 

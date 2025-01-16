@@ -7,8 +7,9 @@ DEPENDENCIES		= libft libftprintf
 DEPENDENCIES_DIR	= ./dependencies
 DEPENDENCIES_FLAGS	= $(foreach lib,$(DEPENDENCIES),-L$(BUILD_PATH)/$(lib)) \
 						$(foreach lib,$(patsubst lib%,%, $(DEPENDENCIES)),-l$(lib)) \
-						-lmlx -lXext -lX11 -lm
+						-L$(DEPENDENCIES_DIR)/minilibx-linux -lmlx -lXext -lX11 -lm
 INCLUDE_FLAGS		= -Iinclude $(foreach lib,$(DEPENDENCIES),-Iinclude/$(lib))
+MINI_LIBX			= $(DEPENDENCIES_DIR)/minilibx-linux/libmlx_Linux.a
 
 SRCS			=	src/main.c \
 					src/hooks.c \
@@ -22,7 +23,7 @@ HEADERS			= include/fractol.h
 
 all: $(NAME)
 
-$(NAME): $(OBJS) $(foreach lib,$(DEPENDENCIES),$(BUILD_PATH)/$(lib)/$(lib).a) $(HEADERS)
+$(NAME): $(OBJS) $(foreach lib,$(DEPENDENCIES),$(BUILD_PATH)/$(lib)/$(lib).a) $(MINI_LIBX) $(HEADERS)
 	$(CC) $(CFLAGS) $(OBJS) $(DEPENDENCIES_FLAGS) $(INCLUDE_FLAGS) -o $(NAME)
 
 $(foreach lib,$(DEPENDENCIES),$(BUILD_PATH)/$(lib)/$(lib).a):
@@ -32,15 +33,13 @@ $(BUILD_PATH)/obj/%.o: src/%.c $(HEADERS)
 	@mkdir -p $(BUILD_PATH)/obj/complex
 	$(CC) $(CFLAGS) $(DEPENDENCIES_FLAGS) $(INCLUDE_FLAGS) -c $< -o $@
 
+$(MINI_LIBX):
+	$(MAKE) -C $(DEPENDENCIES_DIR)/minilibx-linux
+
 clean:
 	@rm -rf $(BUILD_PATH)/obj
 	@rm -rf $(BUILD_PATH)/lib*/obj
-
-copy_include:
-	@for lib in $(DEPENDENCIES); do \
-		cp $(DEPENDENCIES_DIR)/$$lib/include/* include/; \
-		echo "# include \"$$lib.h\"" >> include/fractol.h; \
-	done
+	$(MAKE) -C $(DEPENDENCIES_DIR)/minilibx-linux clean
 
 fclean: clean
 	@rm -rf $(NAME)
@@ -48,4 +47,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean re fclean copy_include
+.PHONY: all clean re fclean
